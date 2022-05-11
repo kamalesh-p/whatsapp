@@ -40,6 +40,8 @@ thread* t1, * t2;
 
 bool counting = 1;
 
+bool loggedin = false;
+
 class threadsend {
 public:
     void operator()(int num)
@@ -66,6 +68,7 @@ void sendd() {
     if (!counting) {
         sprintf_s(statement, "%s\0", ""); // empty string
         cin.getline(statement, DEFAULT_BUFLEN);
+        //scanf_s("%\ns", statement);
     }
     else {
         cout << statement << endl;
@@ -74,7 +77,11 @@ void sendd() {
     if (statement[0] == '\0') {
         return;
     }
-    if (strcmp(statement, "login") == 0) {
+    if (strcmp(statement, "clear") == 0 || strcmp(statement, "cls") == 0 || strcmp(statement, "clc") == 0) {
+        system("cls");
+        return;
+    }
+    else if (strcmp(statement, "login") == 0) {
         char name[15];
         char pass[15];
         cout << "Enter name: ";
@@ -100,26 +107,35 @@ void sendd() {
         }
         sprintf_s(statement, "signup_%s_%s\0", name, pass);
     }
-    else if (strcmp(statement, "send many") == 0) {
-        
-    }
-    else if (strcmp(statement, "send") == 0) {
-        char name[15];
-        char message[DEFAULT_BUFLEN];
-        cout << "Enter receiver name: ";
-        cin >> name;
-        cout << "Enter message: ";
-        cin >> message;
-        sprintf_s(statement, "name_%s_%s\0", name, message);
+    else if (loggedin) {
+        if (strcmp(statement, "send group") == 0 || strcmp(statement, "send many") == 0) {
+            cout << "Enter names: (for example)" << "user-1,user-2,user-3,user-4,....." << endl;
+            char names[15 * 10]; 
+            char message1[DEFAULT_BUFLEN] = "\0";
+            char message[DEFAULT_BUFLEN] = "\0";
+            cin >> names;
+            cout << "Enter message: ";
+            cin >> message1;
+            cin.getline(message, DEFAULT_BUFLEN);
+            sprintf_s(statement, "names_%s,_%s%s\0", names, message1, message);
+        }
+        else if (strcmp(statement, "send") == 0) {
+            char name[15];
+            char message1[DEFAULT_BUFLEN] = "\0";
+            char message[DEFAULT_BUFLEN] = "\0";
+            cout << "Enter receiver name: ";
+            cin >> name;
+            cout << "Enter message: ";
+            cin >> message1;
+            cin.getline(message, DEFAULT_BUFLEN);
+            sprintf_s(statement, "name_%s_%s%s\0", name, message1, message);
+        }
     }
     sendbuf = statement;
     iResult = send(ConnectSocket, sendbuf, strlen(sendbuf), 0);
     if (iResult == SOCKET_ERROR) {
         connect_to_server();
         //return 0;
-    }
-    if (strcmp(statement, "disconnect") == 0) {
-        cout << "disconnected" << endl;
     }
     cout << "sent: " << sendbuf << endl;
     //return 1;
@@ -137,8 +153,18 @@ void receivee() {
         }
         recvbuf[i] = '\0';
         cout << endl;
-        if (strcmp(recvbuf, "#Fail\0") == 0) {
+        if (strcmp(recvbuf, "#Login Successful\0") == 0) {
+            loggedin = true;
+        }
+        else if (strcmp(recvbuf, "#Fail\0") == 0) {
+            loggedin = false;
             cout<<"Failed to login" << endl;
+        }
+        else if (strcmp(recvbuf, "#Logged out\0") == 0) {
+            loggedin = false;
+        }
+        else if(strcmp(recvbuf, "#Account deleted\0") == 0) {
+            loggedin = false;
         }
     }
     else if (iResult == 0) {
