@@ -1,20 +1,21 @@
 #pragma once
 class Myfiles {
 private:
-	FILE* stream1, * stream2;
+    FILE* stream1, * stream2;
     errno_t err;
-	char login[10] = "login.txt";
-	char message[12] = "message.txt";
+    char login[10] = "login.txt";
+    char roughlogin[20] = "rough_login.txt";
+    char message[12] = "message.txt";
     char roughmessage[18] = "rough_message.txt";
     int wait = 0;
     int wait1 = 0;
-public: 
-	void getmessage() {
-		
-	}
-	void setmessage() {
+public:
+    void getmessage() {
 
-	}
+    }
+    void setmessage() {
+
+    }
     void fetchmessageswhileoffline(char thistoname[15], SOCKET thisClientSocket) {
         while (this->wait1) {
             cout << "fetchmessageswhileoffline waiting...." << endl;
@@ -38,81 +39,73 @@ public:
                 int whilecount = 0;
                 while (fscanf_s(stream1, "%s", buff, _countof(buff)) != EOF) {
                     //cout << buff << endl;
-                    whilecount++;
-                    int j = 0;
                     char message1[DEFAULT_BUFLEN] = "\0",
                         message2[1 + 15 + 1 + 15 + 1 + DEFAULT_BUFLEN + 1 + 4] = "\0";
                     char fromname[15] = "\0", toname[15] = "\0";
-                    int count = 0, frombool = 0, tobool = 0;
-                    int i_i = 0;
-                    if (whilecount != 1) {
-                        message2[0] = ' ';
-                        i_i = 1;
-                    }
-                    for (i = 0; i < strlen(buff); i++) {
-                        message2[i + i_i] = buff[i];
-                        if (buff[i] == '_') {
-                            count++;
-                            j = 0;
-                            if (count == 3) {
-                                break;
-                            }
-                            continue;
-                        }
-                        if (count == 0 && j < 15) {
-                            toname[j] = buff[i];
-                            toname[j + 1] = '\0';
-                            j++;
-                        }
-                        else if (count == 1 && j < 15) {
-                            fromname[j] = buff[i];
-                            fromname[j + 1] = '\0';
-                            j++;
-                        }
-                        else if (count == 2 && j < DEFAULT_BUFLEN) {
-                            if (buff[i] == '*') buff[i] = ' ';
-                            message1[j] = buff[i];
-                            message1[j + 1] = '\0';
-                            j++;
-                        }
-                    }
-
-                    //cout << "from: " << fromname << "to: " << toname << "message: " << message1 << endl;
-                    if (strcmp(toname, thistoname) == 0) {
-                        if (buff[i + 1] == 'n' && buff[i + 2] == 'o' && buff[i + 3] == 't') {
-                            cout << "from: " << fromname << " to: " << toname << " message: " << message1 << endl;
-                            j = strlen(message1);
-                            message1[j] = '(';
-                            j++;
-                            int storei = i;
-                            for (i = 0; i < strlen(fromname); i++) {
-                                message1[j + i] = fromname[i];
-                            }
-                            message1[j + i] = ')';
-                            j++;
-                            message1[j + i] = '\0';
-                            int value = sendd(thisClientSocket, message1, toname);
-                            //cout << value << endl;
-                            i = storei;
+                    int num;
+                    split(buff, toname, fromname, message1, &num);
+                    char space = '\0';
+                    if (whilecount)
+                        space = ' ';
+                    if (strcmp(thistoname, toname) == 0) {
+                        if (num) {}
+                        else {
+                            char message3[DEFAULT_BUFLEN + 1 + 15 + 1] = "\0";
+                            char message4[DEFAULT_BUFLEN] = "\0";
+                            sprintf_s(message3, "%s(%s)\0", message1, fromname);
+                            replaceChar(message3, '*', ' ');
+                            sprintf_s(message4, "%s\0", message1);
+                            replaceChar(message4, '*', ' ');
+                            int value = sendd(thisClientSocket, message3, toname);
+                            char sent_not_seen[4] = "\0";
                             if (value) {
-                                message2[i + 1 + i_i] = 's';
-                                message2[i + 2 + i_i] = 'e';
-                                message2[i + 3 + i_i] = 'n';
+                                value = client->sendonepersonfromserver(message4, fromname, toname);
+                                Sleep(50);
+                                if (value) {
+                                    sprintf_s(sent_not_seen, "sen\0");
+                                }
+                                else {
+                                    sprintf_s(sent_not_seen, "see\0");
+                                }
+                                /*
+                                if (whilecount)
+                                    sprintf_s(message2, " %s_%s_%s_sen", toname, fromname, message1, num);
+                                else
+                                    sprintf_s(message2, "%s_%s_%s_sen", toname, fromname, message1, num);
+                                */
                             }
                             else {
-                                message2[i + 1 + i_i] = 'n';
-                                message2[i + 2 + i_i] = 'o';
-                                message2[i + 3 + i_i] = 't';
+                                sprintf_s(sent_not_seen, "not\0");
+                                /*
+                                if (whilecount)
+                                    sprintf_s(message2, " %s_%s_%s_not", toname, fromname, message1, num);
+                                else
+                                    sprintf_s(message2, "%s_%s_%s_not", toname, fromname, message1, num);
+                                    */
                             }
+                            sprintf_s(message2, " %s_%s_%s_%s", toname, fromname, message1, sent_not_seen);
                         }
                     }
-                    else {
-                        message2[i + 1 + i_i] = buff[i + 1];
-                        message2[i + 2 + i_i] = buff[i + 2];
-                        message2[i + 3 + i_i] = buff[i + 3];
+                    else if (strcmp(thistoname, fromname) == 0 && num == 2) {
+                        char message4[DEFAULT_BUFLEN] = "\0";
+                        sprintf_s(message4, "%s\0", message1);
+                        replaceChar(message4, '*', ' ');
+                        Sleep(50);
+                        int value = client->sendonepersonfromserver(message4, fromname, toname);
+                        char sent_not_seen[4] = "\0";
+                        if (value) {
+                            sprintf_s(sent_not_seen, "sen\0");
+                        }
+                        else {
+                            sprintf_s(sent_not_seen, "see\0");
+                        }
+                        sprintf_s(message2, " %s_%s_%s_%s", toname, fromname, message1, sent_not_seen);
                     }
-                    message2[i + 4 + i_i] = '\0';
-                    cout << whilecount << ") " << message2 << endl;
+                    else {
+                        sprintf_s(message2, " %s", buff);
+                    }
+                    whilecount++;
+                    //cout << whilecount << ") " << message2 << endl;
                     fprintf(stream2, message2);
                 }
             }
@@ -156,7 +149,7 @@ public:
         Sleep(100);
         this->wait1 = 0;
     }
-    int sendMessageUsingName(char thisname[15], char message[DEFAULT_BUFLEN], char fromname[15]) {
+    int sendMessageUsingName(char thisname[15], char message[DEFAULT_BUFLEN], char fromname[15], int send_not) {
         if (strcmp(thisname, fromname) == 0) {
             return 1;
         }
@@ -189,7 +182,10 @@ public:
                         }
                     }
                     message[j] = '\0';
-                    sprintf_s(finalmessage, " %s_%s_%s_not\0", thisname, fromname, message);
+                    if(send_not)
+                        sprintf_s(finalmessage, " %s_%s_%s_sen\0", thisname, fromname, message);
+                    else
+                        sprintf_s(finalmessage, " %s_%s_%s_not\0", thisname, fromname, message);
                     //cout << finalmessage << endl;
                     //cout << endl;
                     break;
@@ -268,6 +264,91 @@ public:
         Sleep(100);
         this->wait = 0;
         return boolean;
+    }
+    void deleteid(char name[15]) {
+        while (this->wait) {
+            cout << "getid waiting...." << endl;
+            Sleep(50);
+        }
+        this->wait = 1;
+        int boolean = 0;
+        //copy from login to rough
+        err = fopen_s(&stream1, login, "r");
+        if (err == 0) {
+            err = fopen_s(&stream2, roughlogin, "w");
+            char emty[2] = "\0";
+            if (err == 0)  fprintf(stream2, emty);
+            if (stream2) fclose(stream2);
+
+            err = fopen_s(&stream2, roughlogin, "a");
+            if (err == 0) {
+                char buff[1 + 15 + 1 + 15 + 1] = "\0";
+                int whilecount = 0;
+                while (fscanf_s(stream1, "%s", buff, _countof(buff)) != EOF) {
+                    char thisname[15], thispass[15];
+                    split(buff, thisname, thispass);
+                    if (strcmp(name, thisname) == 0) {
+                        cout << "Account Deleted (" << name << ")\n";
+                    }
+                    else {
+                        //save in other rough file
+                        char newbuff[1 + 15 + 1 + 15 + 1];
+                        if (whilecount)
+                            sprintf_s(newbuff, " %s", buff);
+                        else
+                            sprintf_s(newbuff, "%s", buff);
+                        //cout << "buffer:" << newbuff << endl;
+                        fprintf(stream2, newbuff);
+                        whilecount++;
+                    }
+                }
+            }
+            if (stream2) fclose(stream2);
+        }
+        else {
+            cout << "DeleteID " << login << "' not opened\n";
+        }
+        if (stream1)
+        {
+            err = fclose(stream1);
+        }
+
+        //paste from rough to login
+        err = fopen_s(&stream1, roughlogin, "r");
+        if (err == 0) {
+            err = fopen_s(&stream2, login, "w");
+            char emty[2] = "\0";
+            if (err == 0)  fprintf(stream2, emty);
+            if (stream2) fclose(stream2);
+
+            err = fopen_s(&stream2, login, "a");
+            if (err == 0) {
+                char buff[1 + 15 + 1 + 15 + 1] = "\0";
+                int whilecount = 0;
+                while (fscanf_s(stream1, "%s", buff, _countof(buff)) != EOF) {
+                    //save in login file
+                    char newbuff[1 + 15 + 1 + 15 + 1];
+                    if (whilecount)
+                        sprintf_s(newbuff, " %s", buff);
+                    else
+                        sprintf_s(newbuff, "%s", buff);
+                    //cout << "buffer:" << newbuff << endl;
+                    fprintf(stream2, newbuff);
+                    whilecount++;
+                }
+            }
+            if (stream2) fclose(stream2);
+        }
+        else {
+            cout << "DeleteID " << login << "' not opened\n";
+        }
+        if (stream1)
+        {
+            err = fclose(stream1);
+        }
+        Sleep(100);
+        this->wait = 0;
+        return;
     }
 	int getid(char getbuff[15 + 1 + 15]) {
         while (this->wait) {
