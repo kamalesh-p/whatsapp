@@ -5,12 +5,13 @@ client.cpp
 
 # Server
 LinkedList.h    
-Myfiles.h    
+Myfiles.h
+functions.h     
 server.cpp    
 message.txt    
 login.txt    
 rough_message.txt    
-
+rough_login.txt     
 
 # Client
 1) Initialise Socket   
