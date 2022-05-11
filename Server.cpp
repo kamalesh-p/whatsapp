@@ -79,6 +79,8 @@ void threadcountfunc() {
     //cout << "******" << std::thread::hardware_concurrency << "******" << endl;
 }
 
+// Functions
+#include "functions.h"
 
 // Linked List
 #include "LinkedList.h"
@@ -242,12 +244,28 @@ int receivee(SOCKET ClientSocketReceive, int CountClientNumber, char ReceiveName
                 }
                 ReceiveName[i] = '\0';
                 client->changename(ClientSocketReceive, ReceiveName);
-                myfiles->fetchmessageswhileoffline(ReceiveName, ClientSocketReceive);
+                //myfiles->fetchmessageswhileoffline(ReceiveName, ClientSocketReceive);
+                //cout << "Sent fetched messages";
             }
             else {
                 char message[] = "#User Already Exist";
                 return sendd(ClientSocketReceive, message, message);
             }
+        }
+        /*
+            delete
+        */
+        else if (strcmp(statement, "delete") == 0) {
+            myfiles->deleteid(ReceiveName);
+            client->changename(ClientSocketReceive, ReceiveName, 2);
+            ReceiveName[0] = '\0';
+        }
+        /*
+            logout
+        */
+        else if (strcmp(statement,"logout") == 0) {
+            ReceiveName[0] = '\0';
+            client->changename(ClientSocketReceive, ReceiveName, 0);
         }
         /*
             login_name_passsword
@@ -282,6 +300,7 @@ int receivee(SOCKET ClientSocketReceive, int CountClientNumber, char ReceiveName
                 ReceiveName[i] = '\0';
                 client->changename(ClientSocketReceive, ReceiveName);
                 myfiles->fetchmessageswhileoffline(ReceiveName, ClientSocketReceive);
+                cout << "Sent fetched messages";
             }
             else {
                 char message[] = "#Fail";
@@ -291,6 +310,9 @@ int receivee(SOCKET ClientSocketReceive, int CountClientNumber, char ReceiveName
         // other
         else if (strcmp(statement, "others") == 0) {
             client->getonline(ClientSocketReceive, ReceiveName);
+        }
+        else if (strcmp(statement, "myname") == 0 || strcmp(statement, "name") == 0) {
+            client->myname(ClientSocketReceive, ReceiveName);
         }
         /*
             names_(client name),(client name),(client name)..._(statement)
@@ -327,14 +349,21 @@ int receivee(SOCKET ClientSocketReceive, int CountClientNumber, char ReceiveName
                 }
             }
             message[l] = '\0';
+            char savemessage[DEFAULT_BUFLEN];
+            strcpy_s(savemessage, message);
             for (i = 0; i < count; i++) {
-                cout << names[i] << endl; 
+                cout << names[i] << endl;
+                if (strcmp(ReceiveName, names[i]) == 0) {
+                    cout << "same user" << endl;
+                    continue;
+                }
+                strcpy_s(message, savemessage);
                 int value = client->sendoneperson(ClientSocketReceive, names[i], message, ReceiveName);
-                //cout << value << endl;
+                cout << value << endl;
                 if (!value)
                 {
                     //cout << "here" << endl;
-                    value = myfiles->sendMessageUsingName(names[i], message, ReceiveName);
+                    value = myfiles->sendMessageUsingName(names[i], message, ReceiveName, 0);
                     //cout << value << endl;
                     if (value) {
                         char newmessage[50];
@@ -343,7 +372,7 @@ int receivee(SOCKET ClientSocketReceive, int CountClientNumber, char ReceiveName
                     }
                 }
                 else{
-                    value = myfiles->sendMessageUsingName(names[i], message, ReceiveName);
+                    value = myfiles->sendMessageUsingName(names[i], message, ReceiveName, 1);
                 }
             }
         }
@@ -378,7 +407,7 @@ int receivee(SOCKET ClientSocketReceive, int CountClientNumber, char ReceiveName
             if (!value)
             {
                 //cout << "here" << endl;
-                value = myfiles->sendMessageUsingName(name, message, ReceiveName);
+                value = myfiles->sendMessageUsingName(name, message, ReceiveName, 0);
                 //cout << value << endl;
                 if (value) {
                     char newmessage[50];
